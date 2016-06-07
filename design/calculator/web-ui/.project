@@ -1,0 +1,24 @@
+<projectDescription>
+  <name>webUI</name>
+  <buildSpec>
+    <buildCommand>
+      <name>org.scala-ide.sdt.core.scalabuilder</name>
+    </buildCommand>
+  </buildSpec>
+  <natures>
+    <nature>org.scala-ide.sdt.core.scalanature</nature>
+    <nature>org.eclipse.jdt.core.javanature</nature>
+  </natures>
+  <linkedResources>
+    <link>
+      <name>-coursera-scala-design-calculator-src-main-scala-calculator</name>
+      <type>2</type>
+      <location>C:/coursera/scala/design/calculator/src/main/scala/calculator</location>
+    </link>
+    <link>
+      <name>-coursera-scala-design-calculator-src-main-scala-calculator</name>
+      <type>2</type>
+      <location>C:/coursera/scala/design/calculator/src/main/scala/calculator</location>
+    </link>
+  </linkedResources>
+</projectDescription>
