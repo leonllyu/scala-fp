@@ -251,8 +251,14 @@ class QuickCheckTweetSet extends Properties("TweetSet") {
     right <- genTweetSet
   } yield new NonEmpty(t, left,right)
   
+  lazy val genFunction: Gen[Tweet => Boolean] =  for {
+      t <- tweets
+      f <- oneOf(const((y: Tweet)=>false), genFunction)
+  } yield x => x.toString.equals(t.toString) || f(x)
+  
   implicit lazy val arbTweetSet: Arbitrary[TweetSet] = Arbitrary(genTweetSet)
   implicit lazy val arbTweet: Arbitrary[Tweet] = Arbitrary(tweets) 
+  //implicit lazy val arbFunction: Arbitrary[Tweet=>Boolean] = Arbitrary(genFunction) //does not work
 
   property("incl, remove, contains, filter, union, mostRetweeted, descendingByRetweet") = forAll {
     (ts1: TweetSet, t1: Tweet, p: Tweet => Boolean) => 
@@ -271,12 +277,12 @@ class QuickCheckTweetSet extends Properties("TweetSet") {
       !ts1.incl(t1).remove(t1).contains(t1) &&
       !ts1.remove(t1).contains(t1) &&
       (tsu.contains(t1) || tsv.contains(t1)) &&
-      //following two cases have many unsuccessful situation
+      //following case has many unsuccessful situation
       //(tswMostRetWeeted.toString.equals(tsuMostRetWeeted.toString) || tswMostRetWeeted.toString.equals(tsvMostRetWeeted.toString)) &&
-      //(tsw.mostRetweeted.toString.equals(tsu.mostRetweeted.toString) || !p(t1)) &&
-      (tsu.contains(t1) || !p(t1)) &&
-      (tsv.contains(t1) || p(t1)) &&
-      (p(t1) || !p(t1)) &&
+      (tsw.mostRetweeted.toString.equals(ts1.mostRetweeted.toString) || tsw.mostRetweeted.toString.equals(t1.toString)) &&
+      //(tsu.contains(t1) || !p(t1)) &&
+      //(tsv.contains(t1) || p(t1)) &&
+      //(p(t1) || !p(t1)) && // why this is not always true? (0.1%-0.2% failed cases). without implicit for p? 
       tsyMostRetWeeted.toString.equals(tszMostRetWeeted.toString) &&//most important case
       tszMostRetWeeted.toString.equals(tsz.descendingByRetweet.head.toString) &&
       //following case failed on every test

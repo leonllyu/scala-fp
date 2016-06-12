@@ -1,14 +1,16 @@
 package forcomp
 
-//for ScalaCheck
-import org.scalacheck._
-import Arbitrary._
-import Gen._
-import Prop._
+import scala.annotation.tailrec
+
+import org.scalacheck.Arbitrary
+import org.scalacheck.Gen
+import org.scalacheck.Gen.const
+import org.scalacheck.Prop.forAll
+import org.scalacheck.Prop.propBoolean
+import org.scalacheck.Properties
 
 object Anagrams {
   def main(args: Array[String]) {
-    //val sentence = List("Leon", "Yu")
     val sentence = List("Scala", "is", "cool")
     println(sentenceAnagrams(sentence))
   }
@@ -102,6 +104,7 @@ object Anagrams {
    *  in the example above could have been displayed in some other order.
    */
   //TODO:
+  //@tailrec
   def combinations(occurrences: Occurrences): List[Occurrences] = {
     
     if (occurrences.isEmpty) List(List())
@@ -109,7 +112,7 @@ object Anagrams {
       val o = occurrences.head
       val hl = for (i <- 1 to o._2) yield (o._1, i)      
       val tl = combinations(occurrences.tail)
-      hl.toList.flatMap(elem1 => tl.flatMap(elem2 => List(elem1::elem2))) ::: tl
+      hl.toList.flatMap(elem1 => tl.flatMap(elem2 => List(elem1::elem2))) ::: tl 
     }
   }
 
@@ -191,6 +194,7 @@ object Anagrams {
    */
   //TODO:
   def sentenceAnagrams(sentence: Sentence): List[Sentence] = {
+    //@tailrec
     def occurrencesAnagrams(os: Occurrences): List[Sentence] = {
       if (os.isEmpty) List(Nil)
       else {
@@ -207,6 +211,7 @@ object Anagrams {
 }
 
 class QuickCheckAnagrams extends Properties("FunSets.Set") {
+import Anagrams._
 
   def genStr: Gen[List[Char]] = Gen.oneOf(const(List()), genChars) // convert Gen[Char] to Char
   
@@ -218,24 +223,32 @@ class QuickCheckAnagrams extends Properties("FunSets.Set") {
     s <- genStr
   } yield c :: s
   
-  def genSentence: Gen[List[Anagrams.Word]] = Gen.oneOf(const(List()), genWords)
+  def genSentence: Gen[List[Word]] = Gen.oneOf(const(List()), genWords)
     
-  def genWords: Gen[List[Anagrams.Word]] = for {
+  def genWords: Gen[List[Word]] = for {
     w <- genStr
     s <- genSentence
   } yield w.toString :: s
   
   implicit lazy val argChars: Arbitrary[List[Char]] = Arbitrary(genChars)
-  implicit lazy val argSentence: Arbitrary[List[Anagrams.Word]] = Arbitrary(genWords)
+  implicit lazy val argSentence: Arbitrary[List[Word]] = Arbitrary(genWords)
   
   property("check all generated sentences are legal and have the same occurrences") = forAll {
-    (sentence: List[Anagrams.Word]) => {
-      val o = Anagrams.sentenceOccurrences(sentence)
-      Anagrams.sentenceAnagrams(sentence).foldLeft(true)((b, s) => b && 
-              s.foldLeft(true)((b, w) => b && Anagrams.dictionary.indexOf(w) != -1) && 
-              //Anagrams.sentenceOccurrences(s).toSet().diff(o.toSet).isEmpty &&
-              //o.toSet.diff(Anagrams.sentenceOccurrences(s).toSet()).isEmpty) &&
-              true)
-    }     
+    (sentence: List[Word]) => {
+      val o = sentenceOccurrences(sentence)
+      /*
+      sentenceAnagrams(sentence).foldLeft(true)((b, s) => b && 
+              s.foldLeft(true)((b, w) => b && dictionary.indexOf(w) != -1) && 
+              //sentenceOccurrences(s).toSet().diff(o.toSet).isEmpty &&
+              //o.toSet.diff(sentenceOccurrences(s).toSet()).isEmpty) &&
+              true)     
+      *    
+      */
+      !sentenceAnagrams(sentence).exists { s =>
+        s.exists { w => (dictionary.indexOf(w) == -1) } || 
+        !o.toSet.diff(sentenceOccurrences(s).toSet).isEmpty ||
+        !sentenceOccurrences(s).toSet.diff(o.toSet).isEmpty
+      }
+    }
   }
 }

@@ -74,6 +74,61 @@ import FloatOps._
     }
   }
 
+  test("Leaf.insert(b) should return a Fork with the body inserted into proper section") {
+    val b1 = new Body(100f, 1.25f, 0.25f, 0f, 0f)
+    val b2 = new Body(200f, 0.25f, 1.25f, 0f, 0f)
+    val leaf = Leaf(1f, 1f, 2f, Seq(b1))
+    val inserted = leaf.insert(b2)
+    inserted match {
+      case Fork(nw, ne, sw, se) => {
+        nw match {
+          case Empty(0.5f, 0.5f, 1f) =>
+          case _ => fail("nw should be empty")
+        }
+        
+        ne match {
+          case Leaf(1.5f, 0.5f, 1f, Seq(b1)) =>
+          case _ => fail("ne shoul be leaf")
+        }
+        
+        sw match {
+          case Leaf(0.5f, 1.5f, 1f, Seq(b2)) =>
+          case _ => fail("sw shoul be leaf")
+        }
+        se match {
+          case Empty(1.5f, 1.5f, 1f) =>
+          case _ => fail("se should be empty")
+        }
+      }
+      case _ => fail("Leaf.insert() should create Fork when size > minimumSize")
+    }
+  }
+  
+  test("Fork.insert(b) should return a Fork with the body inserted into proper section") {
+    val b1 = new Body(100f, 1.25f, 0.25f, 0f, 0f)
+    val b2 = new Body(200f, 0.25f, 1.25f, 0f, 0f)
+    val nw = Empty(0.5f, 0.5f, 1f)
+    val ne = Leaf(1.5f, 0.5f, 1f, Seq(b1))
+    val sw = Empty(0.5f, 1.5f, 1f)
+    val se = Empty(1.5f, 1.5f, 1f)
+    val quad = Fork(nw, ne, sw, se)
+    val inserted = quad.insert(b2)
+    inserted match {
+      case Fork(nw, ne, sw, se) => sw match {
+          case Leaf(centerX, centerY, size, bodies) => {
+            assert(centerX == 0.5f, s"$centerX should be 0.5f")
+            assert(centerY == 1.5f, s"$centerY should be 1.5f")
+            assert(size == 1f, s"$size should be 1f")
+            assert(bodies == Seq(b2), s"$bodies should contain only the inserted body")            
+          }
+          case _ => fail("Fork.insert() should have new body in nw")
+        }
+      case _ => fail("Fork.insert() should have new body in nw")
+    }
+    
+    
+  }
+
   // test cases for Body
 
   test("Body.updated should do nothing for Empty quad trees") {

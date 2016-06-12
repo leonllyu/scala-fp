@@ -3,6 +3,7 @@ package patmat
 import org.scalatest.FunSuite
 
 import org.scalatest.prop.Checkers
+//import org.scalacheck.Test.Params
 import org.scalacheck.Arbitrary._
 import org.scalacheck.Prop
 import org.scalacheck.Prop._
@@ -11,6 +12,7 @@ import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
 import patmat.Huffman._
+import org.scalacheck.util.Pretty.Params
 
 @RunWith(classOf[JUnitRunner])
 class HuffmanSuite extends FunSuite with Checkers {
@@ -56,6 +58,7 @@ class HuffmanSuite extends FunSuite with Checkers {
     }
   }
   
+  /*
   var i = 0
   var teststr = "ScalaCheck tests"
   while (i < 100) {   
@@ -64,5 +67,9 @@ class HuffmanSuite extends FunSuite with Checkers {
     }
     i = i + 1
   }
+  * 
+  */
+  check(new QuickCheckCodeTree, minSuccessful(5000), maxDiscarded(0))
+  //check(new QuickCheckCodeTree, Params(minSuccessfulTests = 5))
 
 }

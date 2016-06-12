@@ -64,7 +64,7 @@ package object barneshut {
   ) extends Quad {
     val centerX: Float = (nw.centerX + ne.centerX) / 2
     val centerY: Float = (nw.centerY + sw.centerY) / 2
-    val size: Float = math.max(nw.centerX - ne.centerX, sw.centerY - nw.centerY) * 2
+    val size: Float = math.max(ne.centerX - nw.centerX, sw.centerY - nw.centerY) * 2
     val mass: Float = nw.mass + ne.mass + sw.mass + se.mass
     val massX: Float = if (mass == 0) centerX else (nw.mass * nw.massX + ne.mass * ne.massX + sw.mass * sw.massX + se.mass * se.massX) / mass
     val massY: Float = if (mass == 0) centerY else (nw.mass * nw.massY + ne.mass * ne.massY + sw.mass * sw.massY + se.mass * se.massY) / mass
@@ -73,6 +73,7 @@ package object barneshut {
 
     //TODO:
     def insert(b: Body): Fork = {
+      //println ("body.x: " + b.x + " body.y: " + b.y)
       if (b.x <= centerX){
         if (b.y <= centerY) new Fork(nw.insert(b), ne, sw, se)
         else new Fork(nw, ne, sw.insert(b), se)
@@ -93,9 +94,12 @@ package object barneshut {
     def total: Int = bodies.length
     def insert(b: Body): Quad =
       if (size > minimumSize){
-        var newFork = new Fork(Empty(centerX+size/4, centerY-size/4, size/2), Empty(centerX-size/4, centerY-size/4, size/2),
-                        Empty(centerX+size/4, centerY+size/4, size/2), Empty(centerX-size/4, centerY+size/4, size/2))
-        bodies.foldLeft(newFork)(_.insert(_))
+        var newFork = new Fork(Empty(centerX-size/4, centerY-size/4, size/2), Empty(centerX+size/4, centerY-size/4, size/2),
+                        Empty(centerX-size/4, centerY+size/4, size/2), Empty(centerX+size/4, centerY+size/4, size/2))
+        //bodies.foldLeft(newFork)(_.insert(_)) //why this does not work?
+        bodies.foreach { b =>
+          newFork = newFork.insert(b)
+        }
         newFork = newFork.insert(b)
         newFork
       }
@@ -152,7 +156,7 @@ package object barneshut {
           // no force
         case Leaf(_, _, _, bodies) => {
           // add force contribution of each body by calling addForce
-          bodies.foreach(b => {
+          bodies.foreach(b => { //b is not the Body itself
             val dist = distance(b.x, b.y, x, y)
             val dforce = force(mass, b.mass, dist)
             val xn = (b.x - x) / dist
@@ -207,17 +211,18 @@ package object barneshut {
       //for out of boundary insert into closest
       var m = 0
       var n = 0
-      if (b.x > boundaries.maxX) m = 0
-      if (b.x < boundaries.minX) m = sectorPrecision - 1
+      if (b.x > boundaries.maxX) m = sectorPrecision - 1
+      if (b.x < boundaries.minX) m = 0
       if (b.y < boundaries.minY) n = 0
       if (b.y > boundaries.maxY) n = sectorPrecision - 1
       if (b.x <= boundaries.maxX && b.x >= boundaries.minX) {
-        m = math.round((b.x - boundaries.minX) / sectorSize - 0.5f)
+        m = math.round((b.x - boundaries.minX) / sectorSize + 0.5f) - 1
       }
       if (b.y <= boundaries.maxY && b.x >= boundaries.minY) {
-        n = math.round((b.y - boundaries.minY) / sectorSize - 0.5f)
+        n = math.round((b.y - boundaries.minY) / sectorSize + 0.5f) - 1
       }
-      matrix(m*sectorPrecision + n)+=(b)
+      //println("x: " + m + " y: " + n)
+      matrix(n*sectorPrecision + m)+=(b)
       this
     }
 

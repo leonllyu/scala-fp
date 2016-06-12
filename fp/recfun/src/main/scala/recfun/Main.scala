@@ -22,7 +22,7 @@ object Main {
     //else pascal(c-1, r-1) + pascal(c, r-1);
     pascal2.apply(r).apply(c)
 
-  val pascal1: Stream[Stream[Long]] = 
+  val pascal1: Stream[Stream[Long]] = //this seems does not work
   (Stream(1L) 
     #:: (Stream from 1 map { i => 
       // compute row i
@@ -67,6 +67,7 @@ object Main {
    * use annotation @tailrec would give error on the last  line of the function, since it's not tail recursive
    * 
    * How to implement tail recursive version?
+   * CPS, async / promise, or stream
    */
 
 /*@tailrec*/  def countChange1(money: Int, coins: List[Int]): Int = 
@@ -74,22 +75,6 @@ object Main {
     else if (money == 0) 1
     else if (money < coins.head) countChange1(money, coins.tail)
     else countChange1(money - coins.head, coins) + countChange1(money, coins.tail)
-
-  /* this is even much slower --naive way, instead should consider CPS, async / promise, or stream
-  def countChange1(money: Int, coins: List[Int]): Int = 
-    if (coins == null || coins.isEmpty || money < 0) 0 //throw new Exception("no solution")
-    else if (money == 0) 1
-    else {
-      lazy val tailpart = countChange1(money, coins.tail)
-      if (money < coins.head) tailpart
-    //else countChange1(money - coins.head, coins) + countChange1(money, coins.tail)
-      else {
-        lazy val wholepart = countChange1(money - coins.head, coins)
-        wholepart + tailpart
-      }
-    }
-    * 
-    */
 
   /**
    * simple optimization with storing search results

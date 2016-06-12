@@ -7,6 +7,7 @@ import org.scalacheck._
 import Arbitrary._
 import Gen._
 import Prop._
+import org.scalatest.prop.Configuration.PropertyCheckConfig
 
 /**
  * Assignment 4: Huffman coding
@@ -289,6 +290,7 @@ object Huffman {
 }
 
 class QuickCheckCodeTree extends Properties("CodeTree") {
+import Huffman._
   
   def genStr: Gen[List[Char]] = Gen.oneOf(const(List()), genChars) // convert Gen[Char] to Char
   
@@ -300,33 +302,36 @@ class QuickCheckCodeTree extends Properties("CodeTree") {
     s <- genStr
   } yield c :: s
   
-  def genCodeTree: Gen[Huffman.CodeTree] = Gen.oneOf(genLeaf, genFork)
+  def genCodeTree: Gen[CodeTree] = Gen.oneOf(genLeaf, genFork)
   
-  def genLeaf: Gen[Huffman.Leaf] = for {
+  def genLeaf: Gen[Leaf] = for {
     c <- arbitrary[Char] //char - a-z
     w <- arbitrary[Int]
     if (w >= 0)
-  } yield new Huffman.Leaf(c, w)
+  } yield new Leaf(c, w)
   
-  def genFork: Gen[Huffman.Fork] = for {
+  def genFork: Gen[Fork] = for {
     c <- genChars //arbitrary[String]
     w <- arbitrary[Int]
     l <-genCodeTree
     r <- genCodeTree
     if (w >= 0)
-  } yield new Huffman.Fork(l, r, c.toList, w)
+  } yield new Fork(l, r, c.toList, w)
   
-  implicit lazy val arbCodeTree: Arbitrary[Huffman.CodeTree] = Arbitrary(genCodeTree)
+  //ScalaCheck requires an implicit Arbitrary[T] instance for each parameter of type T used in a property
+  implicit lazy val arbCodeTree: Arbitrary[CodeTree] = Arbitrary(genCodeTree)
   implicit lazy val argChars: Arbitrary[List[Char]] = Arbitrary(genChars)
+  //implicit lazy val generatorDrivenConfig = PropertyCheckConfig(minSize = 10, maxSize = 20)
+  //minSize and maxSize setup the size of parameters, such as the length of chars, node number of the codetree
   
-  def stdCodeTree = //Huffman.frenchCode
-    Huffman.englishCode
+  def stdCodeTree = //frenchCode
+    englishCode
 
-  def isHuffmanTree(tree: Huffman.CodeTree): Boolean = {
-    def convertLeavesToList(tree: Huffman.CodeTree, depth: Int): List[(Int, Int)] = tree match {
+  def isHuffmanTree(tree: CodeTree): Boolean = {
+    def convertLeavesToList(tree: CodeTree, depth: Int): List[(Int, Int)] = tree match {
       //convert tree to list of (frequency, depth) for all leaves
-      case Huffman.Fork(l, r, cs, w) => convertLeavesToList(l, depth+1) ::: convertLeavesToList(r, depth+1)
-      case Huffman.Leaf(c, w) => List((w, depth))
+      case Fork(l, r, cs, w) => convertLeavesToList(l, depth+1) ::: convertLeavesToList(r, depth+1)
+      case Leaf(c, w) => List((w, depth))
     }
   
     // sort list on frequency in descending and prove depth is in ascending
@@ -334,15 +339,17 @@ class QuickCheckCodeTree extends Properties("CodeTree") {
     //if (sortedList.isEmpty) true
     //  !(sortedList.zip(sortedList.tail :+ Int.MaxValue).exists(e => e._1 > e._2)) //check whether depth is sorted
     //above checking would fail when there are more than two elements having same frequency
+    //ScalaCheck tested this out
     //instead sorting on depth in ascending, then compare frequency in descending
     val sortedList = convertLeavesToList(tree, 0).sortWith(_._2 <= _._2).map(_._1)
+    //val sortedList = convertLeavesToList(tree, 0).sortBy(_._2).map(_._1)//why this does not work?
     sortedList.isEmpty || !(sortedList.zip(sortedList.tail :+ Int.MinValue).exists(e => e._1 < e._2))
   }
   
   /*
   property("check functions on CodeTree - find invariant contract") = forAll {
   	(chars1: List[Char], chars2: List[Char]) => {
-       val codeTree = Huffman.createCodeTree(chars2)
+       val codeTree = createCodeTree(chars2)
        if (chars1.foldLeft(true)((b, c) => b && (chars2.indexOf(c) != -1)))
        //makeCodeTree(createCodeTree(chars1), createCodeTree(chars2)) === createCodeTree(chars1 ++ chars2)
   	}
@@ -353,22 +360,22 @@ class QuickCheckCodeTree extends Properties("CodeTree") {
   //check all leafs' depth and their frequency (weight)
   property("check Huffman property on the generated CodeTree - char with highest frequency has lowest depth") = forAll {
     //for any CodeTree, including frenchCode and englishCode
-    //(tree: Huffman.CodeTree) => //isHuffmanTree(tree) //not true, any randomly generated tree is not.
+    //(tree: CodeTree) => //isHuffmanTree(tree) //not true, any randomly generated tree is not.
     (chars: List[Char]) => 
-      isHuffmanTree(Huffman.englishCode) &&
-      isHuffmanTree(Huffman.frenchCode) &&
-      (chars.size == 0 || isHuffmanTree(Huffman.createCodeTree(chars))) &&
+      isHuffmanTree(englishCode) &&
+      isHuffmanTree(frenchCode) &&
+      (chars.size == 0 || isHuffmanTree(createCodeTree(chars))) &&
       true
   }
   
   property("decoding an encoded string should be the original string") = forAll {
     (chars: List[Char], codedChars: List[Char]) => // chars here are all a-z strings based on above definitions with implicit
-       val codeTree = Huffman.createCodeTree(codedChars)
-       chars.toString.equals(Huffman.decode(stdCodeTree, Huffman.encode(stdCodeTree)(chars)).toString) &&
+       val codeTree = createCodeTree(codedChars)
+       chars.toString.equals(decode(stdCodeTree, encode(stdCodeTree)(chars)).toString) &&
        //replace encode with quickEncode should work too
-       chars.toString.equals(Huffman.decode(stdCodeTree, Huffman.quickEncode(stdCodeTree)(chars)).toString) &&
+       chars.toString.equals(decode(stdCodeTree, quickEncode(stdCodeTree)(chars)).toString) &&
        //(!chars.foldLeft(true)((b, c) => b && (codedChars.indexOf(c) != -1)) ||
-       //chars.toString.equals(Huffman.decode(codeTree, Huffman.quickEncode(codeTree)(chars)).toString)) &&
+       //chars.toString.equals(decode(codeTree, quickEncode(codeTree)(chars)).toString)) &&
        true
   }
 }

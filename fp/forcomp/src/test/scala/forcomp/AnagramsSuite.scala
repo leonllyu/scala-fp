@@ -104,11 +104,11 @@ class AnagramsSuite extends FunSuite  with Checkers {
     )
     assert(sentenceAnagrams(sentence).toSet === anas.toSet)
   }
-  
+
   var i = 0
   while (i < 10) {
     test("Anagrams satisfies properties. cycle: " + i) {
-      check(new QuickCheckAnagrams)
+      check(new QuickCheckAnagrams, maxSize(3))
     }
     i += 1
   }
