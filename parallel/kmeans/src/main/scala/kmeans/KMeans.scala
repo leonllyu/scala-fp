@@ -5,13 +5,15 @@ import scala.collection._
 import scala.util.Random
 import org.scalameter._
 import common._
-
+/*
 //for ScalaCheck
 import org.scalacheck._
 import Arbitrary._
 import org.scalacheck.Gen._
 //import org.scalameter.Gen._//???
 import Prop._
+* 
+*/
 
 
 
@@ -53,16 +55,23 @@ class KMeans {
 
   //TODO: put a point to its closest class specified by mean
   //sequential, no need to parallel, points and means are collections to be parS
-  //update GenMap directly to get better performance?
   def classify(points: GenSeq[Point], means: GenSeq[Point]): GenMap[Point, GenSeq[Point]] = {
-    var clusters = (for { m <- means } yield (m -> [GenSeq[Point]]GenSeq())).toMap
+    //some means might be empty
+    var clusters: mutable.Map[Point,GenSeq[Point]]  = mutable.Map()//for { m <- means } yield (m, [GenSeq[Point]]GenSeq())
+    means.foreach { m => 
+      clusters += m -> [GenSeq[Point]]GenSeq()
+    }
+    /* this version does not work all the time, points missing sometimes
     points.foreach { p => {
-      val closest = findClosest(p, means)
-      val genSeq = clusters(closest) :+ (p)
-      clusters -= closest
-      clusters += (closest -> genSeq) //(clusters(closest) :+ (p)))
+      val closest: Point = findClosest(p, means)
+      val newValue: GenSeq[Point] = if (clusters contains closest) (clusters(closest) :+ (p)) else GenSeq(p)
+      clusters += closest ->  newValue
     }}
-    clusters
+    clusters.toMap
+    * 
+    */
+    
+    clusters ++ points.groupBy(p => findClosest(p, means))
   }
   
   //parallel can also be used here
@@ -181,7 +190,8 @@ object KMeansRunner {
     println(s"speedup: ${seqtime / partime}")
   }
 }
-
+/*
 class QuickCheckKMeans extends Properties("Point") {
-  
 }
+* 
+*/
