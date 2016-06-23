@@ -10,7 +10,6 @@ libraryDependencies += "junit" % "junit" % "4.10" % "test"
 // for funsets
 libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4"
 
-
 // this is important to include ScalaCheck
 libraryDependencies ++= assignmentsMap.value.values.flatMap(_.dependencies).toSeq
 
@@ -40,8 +39,7 @@ assignmentsMap := {
       partId = "PzVVY",
       maxScore = 10d,
       styleScoreRatio = 0.2,
-      styleSheet = styleSheetPath,
-      dependencies = depsQuickcheck),
+      styleSheet = styleSheetPath),
     "funsets" -> Assignment(
       packageName = "funsets",
       key = "FNHHMDfsEeWAGiIAC46PTg",
@@ -66,15 +64,6 @@ assignmentsMap := {
       key = "BwkTtD9_EeWFZSIACtiVgg",
       itemId = "uctOq",
       partId = "2KYZc",
-      maxScore = 10d,
-      styleScoreRatio = 0.2,
-      styleSheet = styleSheetPath,
-      dependencies = depsQuickcheck),
-    "waterpour" -> Assignment(
-      packageName = "waterpour",
-      key = "BwkTtD9_EeWFZSIACtiVhh",
-      itemId = "uctOr",
-      partId = "2KYZd",
       maxScore = 10d,
       styleScoreRatio = 0.2,
       styleSheet = styleSheetPath,

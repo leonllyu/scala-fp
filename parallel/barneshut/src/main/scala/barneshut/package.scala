@@ -156,7 +156,7 @@ package object barneshut {
           // no force
         case Leaf(_, _, _, bodies) => {
           // add force contribution of each body by calling addForce
-          bodies.foreach(b => { //b is not the Body itself
+          bodies.foreach(b => { //b is not the Body itself, this should be ok, since force only consider dist > 1f
             val dist = distance(b.x, b.y, x, y)
             val dforce = force(mass, b.mass, dist)
             val xn = (b.x - x) / dist
@@ -170,8 +170,8 @@ package object barneshut {
 
         case Fork(nw, ne, sw, se) => {
           // if far away, it's opaque
-          if (math.sqrt((quad.massX-x)*(quad.massX-x)+(quad.massY-y)*(quad.massY-y))<=eliminationThreshold*quad.size) {
-          // see if node is far enough from the body,
+          if (math.sqrt((quad.massX-x)*(quad.massX-x)+(quad.massY-y)*(quad.massY-y))<=eliminationThreshold*quad.size) {//???
+          // see if node is far enough from the body, if yes, consider it opaque
           // or recursion is needed
           if (nw.size / distance(nw.massX, nw.massY, x, y) < theta) addForce(nw.mass, nw.massX, nw.massY)
           else traverse(nw)
@@ -233,7 +233,7 @@ package object barneshut {
       for {
         i <- 0 until sectorPrecision
         j <- 0 until sectorPrecision
-      } yield matrix(i*sectorPrecision + j).combine(that.apply(i, j))
+      } yield matrix(j*sectorPrecision + i).combine(that(i, j))
       this
     }
 

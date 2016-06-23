@@ -58,7 +58,12 @@ class CalculatorSuite extends FunSuite with ShouldMatchers with Checkers {
   /******************************
    ** CALCULATOR by scalacheck **
    *****************************/
-  test("expr automatically update with signal") {
-    check(new QuickCheckSignal)
+  var i = 0
+  var teststr = "ScalaCheck test: "
+  while (i < 20) {   
+    test(teststr + i) {
+      check(new QuickCheckSignal)
+    }
+    i = i + 1
   }
 }

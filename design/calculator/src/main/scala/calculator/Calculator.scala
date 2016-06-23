@@ -52,14 +52,21 @@ object Calculator {
 }
 
 class QuickCheckSignal extends Properties("Expr") {
+  
   //for ScalaCheck
+  
+  val doubles = choose(Double.MinValue, Double.MaxValue)
+  
+  //use Gen.lzy, otherwise infinite recursion with stack over flow error
+  def exprs: Gen[Expr] = Gen.lzy(Gen.oneOf(literal, ref, plus, minus, times, divide))
+  
   def literal: Gen[Literal] = for {
-    double <- arbitrary[Double]
-  } yield Literal(double)
+    d <- doubles // arbitrary[Double]
+  } yield Literal(d)
     
   def ref: Gen[Ref] = for {
     s <- arbitrary[String]
-    if (s.size != 0)
+    if (s.size != 0 && !s.equals(""))
   } yield Ref(s)
   
   def plus: Gen[Plus] = for {
@@ -82,38 +89,32 @@ class QuickCheckSignal extends Properties("Expr") {
     right <- exprs
     if (right != 0.0)
   } yield Divide(left, right)
-  
-  def exprs: Gen[Expr] = Gen.oneOf(literal, ref, plus, minus, times, divide)
-  
-  implicit lazy val arbExpr: Arbitrary[Expr] = Arbitrary(exprs)
+  /*
+  //self-closure - all strings in Expr should be defined in map
+  def genExprMap(values: List[String]): Gen[Map[String, Signal[Expr]]] = for {
+    keys <- containerOfN[List,Int](values.size, arbitrary[Int])
+  } yield Map(keys.zip(values)
+      
+  //mapOfN
+   * 
+   */
 
-  def genExprMap(s1: String, s2: String, e1: Expr, e2: Expr): Map[String, Signal[Expr]] = {
-    var ref: collection.mutable.Map[String, Signal[Expr]] = collection.mutable.Map[String, Signal[Expr]]()
-    if (s1.size != 0 && s2.size != 0 && !s1.equals(s2)) {
-      ref(s1) = Signal(e1)
-      ref(s2) = Signal(e2)
-    }
-    ref.toMap //convert mutable Map to immutable Map
-  }
+  implicit lazy val arbExpr: Arbitrary[Expr] = Arbitrary(exprs)
   
   property("plus/minus/times/divide expr is automatically updated with signal") = forAll {
-    (s1: String, s2: String, e1: Expr, e2: Expr) => {
-      if (s1.size == 0 || s2.size == 0 || s1.equals(s2)) true
-      else {
-        genExprMap(s1, s2, e1, e2) == genExprMap(s1, s2, Plus(e1, e2), e2)
-        genExprMap(s1, s2, e1, e2) == genExprMap(s1, s2, Minus(e1, e2), e2)
-        genExprMap(s1, s2, e1, e2) == genExprMap(s1, s2, Times(e1, e2), e2)
-        genExprMap(s1, s2, e1, e2) == genExprMap(s1, s2, Divide(e1, e2), e2)
+    (e1: Expr) => {
+    //(e1: Expr, e2: Expr) => {
+        // val mapExprSignal = Gen.mapOfN[String, Signal[Expr]](10, Gen.oneOf(something))
   
-        val oldValues = Calculator.computeValues(genExprMap(s1, s2, e1, e2))
-        val newValues = Calculator.computeValues(genExprMap(s1, s2, Plus(e1, e2), e2))
+        //val oldValues = Calculator.computeValues(genExprMap(s1, s2, e1, e2))
+        //val newValues = Calculator.computeValues(genExprMap(s1, s2, Plus(e1, e2), e2))
         //.map(s => s == olds + e2)
 
-        val references = genExprMap(s1, s2, e1, e2)
-        var olde = e1
+        /*
+        val olde = e1
         val oldSignal = Signal(olde)
         olde = Plus(olde, e2)
-        Calculator.eval(olde, references) - Calculator.eval(oldSignal(), references) < 0.0001 //compare doubles
+        Calculator.eval(olde, mapExprSignal) - Calculator.eval(oldSignal(), mapExprSignal) < 0.0001 //compare doubles
         
         olde = Minus(olde, e2)
         Calculator.eval(olde, references) - Calculator.eval(oldSignal(), references) < 0.0001 //compare doubles
@@ -125,7 +126,10 @@ class QuickCheckSignal extends Properties("Expr") {
           olde = Divide(olde, Plus(e2, Literal(1.0)))
         else olde = Divide(olde, e2)
         Calculator.eval(olde, references) - Calculator.eval(oldSignal(), references) < 0.0001 //compare doubles
-      }     
-    }   
+        * 
+        */
+        true
+      //}
+    }
   }
 }
